@@ -1,4 +1,7 @@
-﻿using System.Net.Http.Headers;
+﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
+using System.Net.Http.Headers;
 
 namespace OpenAiRepository;
 
@@ -7,9 +10,9 @@ public class OpenAiClient
     private static HttpClient? _httpClient;
     private readonly OpenAiClientSecrets _secrets;
 
-    public OpenAiClient(OpenAiClientSecrets secrets)
+    public OpenAiClient(IOptions<OpenAiClientSecrets> secrets)
     {
-        _secrets = secrets;
+        _secrets = secrets.Value;
         if (_httpClient is null)
         {
             InitializeClient(_secrets);
@@ -47,4 +50,14 @@ public class OpenAiClient
 
     public VectorStoresClient VectorStores { get; init; }
 
+}
+
+public static class ServiceCollectionExtensions
+{
+    public static IServiceCollection AddOpenAiClient(this IServiceCollection services, Action<OpenAiClientSecrets> configureOptions)
+    {
+        services.Configure(configureOptions);
+        services.AddSingleton<OpenAiClient>();
+        return services;
+    }
 }
